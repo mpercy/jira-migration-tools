@@ -119,29 +119,41 @@ def add_missing_issue_fields(src_jira_url, issue, field_map):
     r = requests.get(url);
     rest_issue = r.json()
 
-    # The REST issues API has a different JSON schema than the JSON export API.
+    # Note: The REST issues API has a different JSON schema than the JSON import/export API.
+    # The JSON import/export format is documented here:
+    # https://confluence.atlassian.com/jira/importing-data-from-json-495976468.html
+
     # For some reason, the resolution field is not exported by the exporter, so we add it back here.
+    # If Resolution is not set, it doesn't appear in the REST API output.
     if "resolution" in rest_issue["fields"]:
         res = rest_issue["fields"]["resolution"]
         if res:
             issue["resolution"] = res["name"]
 
-    # fixVersions is also left out. It's an array, empty if not set.
-    fix_version_names = []
-    for v in rest_issue["fields"]["fixVersions"]:
-        fix_version_names.append(v["name"])
-    issue["fixedVersions"] = fix_version_names
-
-    # Same with components.
+    # Component/s is also missing from the export.
     component_names = []
     for c in rest_issue["fields"]["components"]:
         component_names.append(c["name"])
     issue["components"] = component_names
 
+    # Affects Version/s is also missing. It's an array, empty if not set.
+    affects_version_names = []
+    for v in rest_issue["fields"]["versions"]:
+        affects_version_names.append(v["name"])
+    issue["affectedVersions"] = affects_version_names
+
+    # Fix Version/s is also missing.
+    fix_version_names = []
+    for v in rest_issue["fields"]["fixVersions"]:
+        fix_version_names.append(v["name"])
+    issue["fixedVersions"] = fix_version_names
+
+    # Custom fields. Add the fields you want to pull to the CUSTOM_FIELD_NAMES
+    # array at the top of this file.
     # At the time of this writing, support for doing the mapping for different
     # field types is limited, but this script can easily be augmented to
-    # support different field types. Docs on the import format are here:
-    # https://confluence.atlassian.com/jira/importing-data-from-json-495976468.html
+    # support different field types. Docs on custom field formats are here:
+    # https://confluence.atlassian.com/jira/importing-data-from-json-495976468.html#ImportingDatafromJSON-CustomFields
     for custom_field_name in CUSTOM_FIELD_NAMES:
         if custom_field_name not in field_map:
             sys.stderr.write("ERROR: Unable to find custom field '%s' in field map" % (custom_field_name,))
@@ -154,14 +166,16 @@ def add_missing_issue_fields(src_jira_url, issue, field_map):
         custom_field_type = field["schema"]["custom"]
 
         custom_field_out = None
+
         # Handle the different types of fields here.
-        # TODO: Add handling for more custom types.
+
         if custom_field_type == "com.atlassian.jira.plugin.system.customfieldtypes:multiversion":
             # Note: This code path would probably also work for generic arrays of strings.
             custom_field_out = { "fieldName": custom_field_name, "fieldType": custom_field_type, "value": [] }
             if rest_issue["fields"][custom_field_id]:
                 for entry in rest_issue["fields"][custom_field_id]:
                     custom_field_out["value"].append(entry["name"])
+        # TODO: Add handling for more custom types here.
 
         if custom_field_out is not None:
             issue["customFieldValues"].append(custom_field_out)
