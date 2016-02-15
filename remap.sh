@@ -22,7 +22,7 @@ echo Remapping users...
 $ROOT/remap_users.py "$MAPPINGS" "$REMOVE_LIST" "$DEST_URL" "$INFILE" > "$TMPFILE"
 
 echo Adding missing fields...
-$ROOT/add_missing_jira_fields.py "$SOURCE_URL" "$DEST_URL" "$TMPFILE" > "$OUTFILE"
+$ROOT/add_missing_jira_fields.py "$MAPPINGS" "$SOURCE_URL" "$DEST_URL" "$TMPFILE" > "$OUTFILE"
 
 rm "$TMPFILE"
 echo Done

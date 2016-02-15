@@ -25,6 +25,7 @@ import requests
 import sys
 import time
 from collections import defaultdict
+from remap_users import get_user_mappings
 
 # Custom fields. These vary by project. If this doesn't apply to you, just
 # leave the CUSTOM_FIELD_NAMES list blank.
@@ -113,7 +114,7 @@ def get_field_map(src_jira_url):
             field_name_map[field["name"]] = field
     return field_name_map
 
-def add_missing_issue_fields(src_jira_url, issue, field_map):
+def add_missing_issue_fields(src_jira_url, issue, field_map, user_map):
     issue_api_path = "/rest/api/2/issue/%s" % (issue["key"],)
     url = src_jira_url + issue_api_path
     r = requests.get(url);
@@ -147,6 +148,21 @@ def add_missing_issue_fields(src_jira_url, issue, field_map):
     for v in rest_issue["fields"]["fixVersions"]:
         fix_version_names.append(v["name"])
     issue["fixedVersions"] = fix_version_names
+
+    # Attachments are also missing.
+    # Documentation for JSON import of attachments:
+    # https://confluence.atlassian.com/jira061/jira-administrator-s-guide/migrating-from-other-issue-trackers/importing-data-from-json-beta-release
+    attachments = rest_issue["fields"]["attachment"]
+    for a in attachments:
+        author_oldname = a["author"]["name"]
+        if author_oldname not in user_map:
+            sys.stderr.write("ERROR: attachment user '%s' not in username map\n" % (author_oldname,))
+            sys.exit(1)
+        issue["attachments"].append({ "name": a["filename"],
+                                      "attacher": user_map[author_oldname],
+                                      "created": a["created"],
+                                      "uri": a["content"],
+                                      "description": "" })
 
     # Custom fields. Add the fields you want to pull to the CUSTOM_FIELD_NAMES
     # array at the top of this file.
@@ -183,17 +199,20 @@ def add_missing_issue_fields(src_jira_url, issue, field_map):
             sys.stderr.write("ERROR: Handler needed for custom field '%s' of type '%s'" % (custom_field_name, custom_field_type))
             sys.exit(1)
 
-
 if __name__ == "__main__":
 
-    if len(sys.argv) < 4:
-        print "Usage: %s src_jira_url dest_jira_url file.json > out.json" % sys.argv[0]
-        print "Example: %s https://issues.cloudera.org https://issues.apache.org/jira file.json > out.json" % sys.argv[0]
+    if len(sys.argv) != 5:
+        sys.stderr.write("Usage: %s user_mappings.tsv src_jira_url dest_jira_url file.json > out.json\n" % sys.argv[0])
+        sys.stderr.write("Example: %s user_mappings.tsv https://issues.cloudera.org https://issues.apache.org/jira file.json > out.json\n" % sys.argv[0])
         sys.exit(1)
 
-    src_jira_url = sys.argv[1]
-    dest_jira_url = sys.argv[2]
-    filename = sys.argv[3]
+    user_mappings_filename = sys.argv[1]
+    src_jira_url = sys.argv[2]
+    dest_jira_url = sys.argv[3]
+    filename = sys.argv[4]
+
+    # Read the username mappings.
+    user_map = get_user_mappings(user_mappings_filename)
 
     # Fetch the global list of fields from the server.
     field_map = get_field_map(src_jira_url)
@@ -209,7 +228,7 @@ if __name__ == "__main__":
                     release_version_map = get_version_map(src_jira_url, dest_jira_url, project_key)
 
                 sys.stderr.write("INFO: Processing %s...\n" % (issue["key"],))
-                add_missing_issue_fields(src_jira_url, issue, field_map)
+                add_missing_issue_fields(src_jira_url, issue, field_map, user_map)
 
                 for h in issue["history"]:
                     if "items" in h:
