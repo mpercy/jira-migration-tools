@@ -17,7 +17,7 @@ the process is time consuming:
 1. Enable JSON export on the source JIRA instance as
    an admin. You must enable both JSON plugins (the search one and the issues
    one). Instructions here:
-   https://confluence.atlassian.com/display/JIRAKB/How+To+Enable+JSON+Export+in+JIRA
+   https://confluence.atlassian.com/display/JIRAKB/How+To+Enable+JSON+Export+in+JIRA  
    To summarize:
    1. Log in to an account with either *JIRA Administrators* or *JIRA System Administrators* Global Permission
    2. Navigate to the *Add-ons* page (Gear menu > Add-ons)
@@ -42,8 +42,8 @@ the process is time consuming:
    mappings defined in `add_missing_jira_fields.py` in a dict called
    `resolution_map`. The list of resolutions can be found with
    the REST API on each instance, at a URL that looks like the following:
-   http://issues.apache.org/jira/rest/api/2/resolution You can find
-   documentation on the JIRA REST API at
+   http://issues.apache.org/jira/rest/api/2/resolution  
+   You can find documentation on the JIRA REST API at:
    https://docs.atlassian.com/jira/REST/latest/
 4. Determine all of the username mappings you need. Usernames on different JIRA
    instances are distinct, and there may be name conflicts. The default
