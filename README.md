@@ -53,18 +53,38 @@ the process is time consuming:
    behavior of a JIRA project will be to attribute comments, assigned tickets,
    and at-mentions in comments to the user with that name. If the account does
    not exist, it will be auto-created.
-   * You have to run through the list of users exported with the list of
-     tickets and figure out whether or not they conflict between the two
-     systems. If someone is using a username that conflicts, ask them to
-     create a new user account and add a mapping. If they don’t already have a
-     user account on the destination instance, and the name they were using on
-     the source instance is not already claimed on the destination instance,
-     then you don’t have to do anything -- their account will automatically be
-     created when the import is done in the destination instance from the JSON
-     dump. A script in this repo helps with this: It’s called
-     `check_profiles.py` and all it does is output a URL you can click to check
-     if the username in the source instance is available in the ASF instance,
-     or if it’s been taken, or if it’s somebody else, etc.
+   1. You need to create two files: a user-mappings file and a user-excludes
+      file. The user-mappings file contains a tab separated mapping of
+      old-name to new-name, one per line (old being the source instance, new
+      being the destination instance). The user-mappings file is also allowed
+      to have a single username on a line, with no tab, meaning that the
+      username will be the same between the two instances.
+      The user-excludes file contains usernames, one per line, of user accounts
+      that will be excluded from the dump. For users in this exclude list, any
+      comments or history that is attributed to this user in the dump (if the
+      user does not already exist in the destination instance) will be instead
+      attributed to the user doing the import on the destination instance
+      (typically the administrator performing the import).
+   2. If you start with empty files for the user-mappings and user-exclude
+      files, and run `remap_users.py`, a list of users will be printed to
+      stderr. This list is intended to help ensure that no users are missed
+      during the import. You can determine the mappings and add users to the
+      appropriate files until `remap_users.py` stops complaining about missing
+      users. Note: in most cases, all the users should end up in the mappings
+      file, and the excludes file should be nearly empty. I primarily added
+      some system users there who I didn't want to import into the destination
+      JIRA. As mentioned, users whose ids will not change may be added to the
+      mappings file as a single word with no tab -- this will be treated as an
+      "identity" mapping.
+   3. As you run through the list of users exported with the list of tickets to
+      determine the username mappings, if someone is using a username that
+      conflicts, ask them to create a new user account and add a mapping.
+      Otherwise, you can choose a non-conflicting destination JIRA username for
+      them. If they don’t already have a user account on the destination
+      instance, and the name they were using on the source instance is not
+      already claimed on the destination instance, then you don’t have to do
+      anything -- their account will automatically be created when the import
+      is done in the destination instance from the JSON dump.
 5. Run the scripts to remap the users, versions, and resolutions, and then
    import the resulting issues into the destination JIRA instance.
    This process requires some back-and-forth, because some mappings (such as
