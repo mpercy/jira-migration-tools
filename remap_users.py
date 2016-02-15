@@ -22,7 +22,7 @@ import json
 import requests
 import sys
 import time
-from check_profiles import format_user_profile_link
+from list_users import format_user_profile_link
 
 if len(sys.argv) != 5:
     print "Usage: %s user_mappings.tsv users_to_remove.lst dest_jira_url jira.json > out.json" % sys.argv[0]
