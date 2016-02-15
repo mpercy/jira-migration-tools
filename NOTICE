@@ -1,0 +1,7 @@
+jira-migration-tools
+Copyright 2016 Mike Percy
+Licensed under the Apache Software License, version 2.0
+
+Originally based on shell and javascript scripts written by Gavin McDonald and
+Thomas Weise for import of the Malhar project into the ASF JIRA instance.
+See https://issues.apache.org/jira/browse/INFRA-10144
