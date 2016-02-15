@@ -72,47 +72,55 @@ Steps to migrate a JIRA project from one instance to another:
    1. You need to create two files: a user-mappings file and a user-excludes
       file. The user-mappings file contains a tab-separated mapping of
       old-username to new-username, one per line (old being the source
-      instance, new being the destination instance). The user-mappings file is
-      also allowed to have a single username on a line, with no tab, meaning
-      that the username will be the same between the two instances. The
-      user-excludes file contains usernames, one per line, of user accounts
-      that will be excluded from the dump. For users in this exclude list, any
-      comments or history that is attributed to this user in the dump (if the
-      user does not already exist in the destination instance) will be instead
-      attributed to the user doing the import on the destination instance
-      (typically the administrator performing the import).
+      instance, new being the destination instance). See
+      `user_mappings.tsv.example` in this repository for an example. The
+      user-mappings file is also allowed to have a single username on a line,
+      with no tab, meaning that the username will be the same between the two
+      instances (an "identity" mapping).
+
+      The user-excludes file contains one
+      username per line of user accounts that will be excluded from the dump.
+      See `user_excludes.lst.example` in this repository for an example of this
+      file format. For users in this exclude list, any comments or history that
+      is attributed to this user in the dump (if the user does not already
+      exist in the destination instance) will be instead attributed to the user
+      doing the import on the destination instance (typically the administrator
+      performing the import).
    2. If you start with empty files for the user-mappings and user-exclude
-      files, and run `remap_users.py`, a list of users will be printed to
-      stderr. This list is intended to help ensure that no users are missed
+      files, and run `remap_users.py`, a list of users that were not accounted for will be printed to
+      stderr. All users must be in one of the two files before the script will successfully complete. This behavior is intended to help ensure that no users are "missed"
       during the import. You can determine the mappings and add users to the
       appropriate files until `remap_users.py` stops complaining about missing
       users. Note: in most cases, all the users should end up in the mappings
       file, and the excludes file should be nearly empty. I primarily added
-      some system users there who I didn't want to import into the destination
-      JIRA. As mentioned, users whose ids will not change may be added to the
-      mappings file as a single word with no tab -- this will be treated as an
-      "identity" mapping.
-   3. As you run through the list of users exported with the list of tickets to
-      determine the username mappings, if someone is using a username that
-      conflicts, ask them to create a new user account and add a mapping.
-      Otherwise, you can choose a non-conflicting destination JIRA username for
-      them. If they don’t already have a user account on the destination
-      instance, and the name they were using on the source instance is not
-      already claimed on the destination instance, then you don’t have to do
-      anything -- their account will automatically be created when the import
-      is done in the destination instance from the JSON dump.
-5. Run the scripts to remap the users, versions, and resolutions, and then
-   import the resulting issues into the destination JIRA instance.
+      some "system" users there who I didn't want to import into the destination
+      JIRA.
+   3. As you are creating the username mappings, if you find someone with a
+      username on the source instance that conflicts with someone else on the
+      destination JIRA instance, ask the user to create a new user account on
+      the destination so that you can add a mapping for it. Else, you may want
+      to simply choose a non-conflicting destination JIRA username for them. If
+      they don’t already have a user account on the destination instance, and
+      the name they were using on the source instance is not yet claimed on the
+      destination instance, then they don't necessarily have to manually create
+      an account at the destination. An account with the same details will be
+      automatically be created for them when the JSON dump is imported into the
+      destination instance (they will likely need to reset their password to
+      gain access to the account though, since the password isn't automatically
+      migrated).
+5. Run the scripts to remap the users and fill in the fields missing from the
+   initial export. Then import the resulting dump into the destination JIRA.
    This process requires some back-and-forth, because some mappings (such as
    version mappings) cannot be determined by the scripts until an initial
-   import is done. The steps are:
-   1. Use `remap_users.py` to rewrite the users found in the JSON export.
+   import is done at the destination. The steps are:
+   1. Use `remap_users.py` to apply the username mappings to the JSON dump.
    2. Import the result of this into the destination JIRA. This will create
       new users, as well as define IDs for Versions, Components, etc.
    3. Use `add_missing_jira_fields.py` to fill in the missing fields and do
       the version mappings for the file outputted from `remap_users.py`. This
       script will make REST calls to both the source and destination
-      instances to determine the necessary mappings.
-   4. Delete all of the previously-imported issues from the project in the
-      **destination** instance, since we need to re-import them.
+      instances to determine the necessary field ID mappings.
+   4. Delete all of the previously-imported issues from the **destination**
+      project so that we can re-import them with correct history and field
+      values.
    5. Import the JSON file created in step (iii).
