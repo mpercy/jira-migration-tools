@@ -19,20 +19,20 @@ the process is time consuming:
    one). Instructions here:
    https://confluence.atlassian.com/display/JIRAKB/How+To+Enable+JSON+Export+in+JIRA  
    To summarize:
-   1. Log in to an account with either *JIRA Administrators* or *JIRA System Administrators* Global Permission
-   2. Navigate to the *Add-ons* page (Gear menu > Add-ons)
-   3. Go to the *Manage add-ons* page
-   4. Change the Filter to include *All add-ons*
-   5. Locate *jira-importers-plugin* (or *JIRA Importers Plugin (JIM)*) and click to expand
+   1. Log in to an account with either **JIRA Administrators** or **JIRA System Administrators** Global Permission
+   2. Navigate to the **Add-ons** page (Gear menu > Add-ons)
+   3. Go to the **Manage add-ons** page
+   4. Change the Filter to include **All add-ons**
+   5. Locate **jira-importers-plugin** (or **JIRA Importers Plugin (JIM)**) and click to expand
    6. Expand to show a list of all modules
    7. Enable the 2 modules needed to enable JSON export (the names of the modules might differ depending on versions).
-      In version 6.4.12 they are called *JSON (searchrequest-json)* and *JSON (issue-json)*.
-2. *As an admin user*, run a search and choose export as JSON. Do this for only
+      In version 6.4.12 they are called **JSON (searchrequest-json)** and **JSON (issue-json)**.
+2. **As an admin user**, run a search and choose export as JSON. Do this for only
    1000 issues at a time (JIRA does not support exporting more than 1000 per
-   search). If you wish to *exclude* any issues from your export, apply those
+   search). If you wish to **exclude** any issues from your export, apply those
    filters at this time. Repeat until you have JSON files containing all of the
-   issues. *After you do this, you may want to disable the export plugins
-   again*, because “regular” (non-admin) users will see the JSON export button,
+   issues. **After you do this, you may want to disable the export plugins
+   again**, because “regular” (non-admin) users will see the JSON export button,
    but they will get an error if they attempt to use it, which may be
    confusing.
 3. Define the "Resolution" mappings between the instances. This is a manual
@@ -75,5 +75,5 @@ the process is time consuming:
       script will make REST calls to both the source and destination
       instances to determine the necessary mappings.
    4. Delete all of the previously-imported issues from the project in the
-      *destination* instance, since we need to re-import them.
+      **destination** instance, since we need to re-import them.
    5. Import the JSON file created in step (iii).
