@@ -1,5 +1,10 @@
 #!/usr/bin/python
 ###############################################################################
+# Prints a list of users in a JIRA JSON dump. This only prints the list of
+# users in the "users" section at the top of the JSON structure, which should
+# be a superset of all users with assignments, comments, history, etc. in the
+# dump.
+###############################################################################
 import json
 import sys
 
@@ -9,7 +14,7 @@ def format_user_profile_link(user, url):
 if __name__ == "__main__":
 
     if len(sys.argv) < 2:
-        print "Usage: %s file.json > out.json" % sys.argv[0]
+        print "Usage: %s jira-dump.json" % sys.argv[0]
         sys.exit(1)
 
     files = sys.argv[1:]
