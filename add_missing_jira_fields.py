@@ -226,4 +226,4 @@ if __name__ == "__main__":
                                                 pass
                                         item[value_field] = json.dumps(vals);
 
-        print json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
+        print json.dumps(data, sort_keys=True, indent=2, separators=(',', ': '))

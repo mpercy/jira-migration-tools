@@ -129,4 +129,4 @@ if __name__ == "__main__":
                 new_issues.append(issue)
             proj["issues"] = new_issues
 
-        print json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
+        print json.dumps(data, sort_keys=True, indent=2, separators=(',', ': '))
