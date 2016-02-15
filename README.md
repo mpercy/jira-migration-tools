@@ -27,14 +27,17 @@ the process is time consuming:
    6. Expand to show a list of all modules
    7. Enable the 2 modules needed to enable JSON export (the names of the modules might differ depending on versions).
       In version 6.4.12 they are called **JSON (searchrequest-json)** and **JSON (issue-json)**.
-2. **As an admin user**, run a search and choose export as JSON. Do this for only
+2. **As an admin user**, run a search and choose Export > JSON. Do this for only
    1000 issues at a time (JIRA does not support exporting more than 1000 per
-   search). If you wish to **exclude** any issues from your export, apply those
-   filters at this time. Repeat until you have JSON files containing all of the
-   issues. **After you do this, you may want to disable the export plugins
-   again**, because “regular” (non-admin) users will see the JSON export button,
-   but they will get an error if they attempt to use it, which may be
-   confusing.
+   search). You can formulate such a search request with syntax like
+   `project = KUDU AND id > KUDU-1000 AND level is EMPTY order by id ASC`. If
+   you wish to **exclude** any issues from your export, apply those filters at
+   this time (the "level is EMPTY" clause in the above example only includes
+   issues which do not have a Security Level defined). Repeat until you have
+   JSON files containing all of the issues. **After you do this, you may want
+   to disable the export plugins again**, because “regular” (non-admin) users
+   will see the JSON export button, but they will get an error if they attempt
+   to use it, which may be confusing.
 3. Define the "Resolution" mappings between the instances. This is a manual
    process. Since Resolution IDs are global for all projects on a given
    instance, this only has to be done once per pair of JIRA instances (as

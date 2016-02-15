@@ -17,7 +17,7 @@ if [ -z "$MAPPINGS" -o -z "$INFILE" -o -z "$TMPFILE" -o -z "$OUTFILE" ]; then
 fi
 
 echo Remapping users...
-./remap_users.py "$MAPPINGS" "$REMOVE_LIST" "$INFILE" > "$TMPFILE"
+./remap_users.py "$MAPPINGS" "$REMOVE_LIST" "$DEST_URL" "$INFILE" > "$TMPFILE"
 
 echo Adding missing fields...
 ./add_missing_jira_fields.py "$SOURCE_URL" "$DEST_URL" "$TMPFILE" > "$OUTFILE"

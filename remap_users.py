@@ -22,16 +22,19 @@ import json
 import requests
 import sys
 import time
+from check_profiles import format_user_profile_link
 
-if len(sys.argv) != 4:
-    print "Usage: %s user_mappings.tsv users_to_remove.lst jira.json > out.json" % sys.argv[0]
+if len(sys.argv) != 5:
+    print "Usage: %s user_mappings.tsv users_to_remove.lst dest_jira_url jira.json > out.json" % sys.argv[0]
+    print "Example: %s user_mappings.tsv users_to_remove.lst https://issues.apache.org/jira infile.json > outfile.json" % sys.argv[0]
     sys.exit(1)
 
 user_mappings_filename = sys.argv[1]
 users_to_remove_filename = sys.argv[2]
-filename = sys.argv[3]
+dest_jira_url = sys.argv[3]
+filename = sys.argv[4]
 
-users_to_exclude = [line.strip() for line in open(users_to_remove_filename, "r")]
+users_to_exclude = frozenset([line.strip() for line in open(users_to_remove_filename, "r")])
 
 user_mappings = {}
 with open(user_mappings_filename, "r") as umf:
@@ -39,10 +42,12 @@ with open(user_mappings_filename, "r") as umf:
         line = line.strip()
         if line.startswith("#") or line == "":
             continue
-        old, new = line.split("\t", 1)
-        # No tab means no change to the username.
-        if new is None:
-            new = old
+        fields = line.split(None, 1)
+        if len(fields) == 2:
+            old, new = fields
+        else:
+            # No tab means no change to the username.
+            old = new = fields[0]
         user_mappings[old] = new
 
 # Fields with exact username matches.
@@ -74,6 +79,29 @@ def replace_usernames(data):
 if __name__ == "__main__":
     with open(filename, "r") as f:
         data = json.load(f)
+
+        # Validate that we have accounted for all users in our mappings.
+        found_all_users = True
+        for user in data["users"]:
+            if user["name"] not in users_to_exclude and user["name"] not in user_mappings:
+                if found_all_users:
+                    found_all_users = False
+                    sys.stderr.write("ERROR: The following users were not found in any mapping / exclusion files:\n")
+                    sys.stderr.write("%s\n" % ('='*80,))
+                sys.stderr.write("%s\n" % (format_user_profile_link(user, dest_jira_url),))
+        if not found_all_users:
+            sys.exit(1)
+
+        # Remove users we don't want included in the migration.
+        new_users = []
+        for user in data["users"]:
+            if user["name"] in users_to_exclude:
+                continue
+            replace_usernames(user)
+            new_users.append(user)
+        data["users"] = new_users
+
+        # Replace usernames throughout the project.
         for proj in data["projects"]:
             replace_usernames(proj)
             proj_prefix = None
@@ -100,14 +128,5 @@ if __name__ == "__main__":
                 # The "normal" case.
                 new_issues.append(issue)
             proj["issues"] = new_issues
-
-        # Remove users we don't want included in the migration.
-        new_users = []
-        for user in data["users"]:
-            if user["name"] in users_to_exclude:
-                continue
-            replace_usernames(user)
-            new_users.append(user)
-        data["users"] = new_users
 
         print json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
