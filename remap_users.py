@@ -71,8 +71,8 @@ def get_user_mappings(user_mappings_filename):
 if __name__ == "__main__":
 
     if len(sys.argv) != 5:
-        print "Usage: %s user_mappings.tsv users_to_exclude.lst dest_jira_url jira.json > out.json" % sys.argv[0]
-        print "Example: %s user_mappings.tsv users_to_exclude.lst https://issues.apache.org/jira infile.json > outfile.json" % sys.argv[0]
+        sys.stderr.write("Usage: %s user_mappings.tsv users_to_exclude.lst dest_jira_url jira.json > out.json\n" % sys.argv[0])
+        sys.stderr.write("Example: %s user_mappings.tsv users_to_exclude.lst https://issues.apache.org/jira infile.json > outfile.json\n" % sys.argv[0])
         sys.exit(1)
 
     user_mappings_filename = sys.argv[1]
