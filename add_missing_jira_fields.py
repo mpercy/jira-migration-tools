@@ -51,7 +51,7 @@ resolution_map = {
     "6" : "6", # Not A Bug / Invalid
     "10003" : "7", # Feedback received / Later
     "10001" : "8", # Won't do / Not a problem
-    "10104" : "9", # Information provided / Unresolved
+    "10004" : "9", # Information provided / Unresolved
     "10008" : "10", # Delivered / Implemented
     "10000" : "11", # Done
     "z1" : "10000", # Auto Closed
