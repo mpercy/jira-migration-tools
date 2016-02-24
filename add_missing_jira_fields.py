@@ -28,8 +28,10 @@ from collections import defaultdict
 from remap_users import get_user_mappings
 
 # Custom fields. These vary by project. If this doesn't apply to you, just
-# leave the CUSTOM_FIELD_NAMES list blank.
-CUSTOM_FIELD_NAMES = [ "Target Version/s", "Code Review" ]
+# leave the CUSTOM_FIELD_IDS list blank.
+CUSTOM_FIELD_IDS = [ "customfield_10060",   # "Target Version/s"
+                     "customfield_10066"    # "Code Review"
+                    ]
 
 # This "Resolution" map is manually constructed by looking at the output from
 # the REST API calls from the source and destination JIRAs. In this case:
@@ -104,14 +106,15 @@ def get_version_map(src_jira_url, dest_jira_url, project_key):
     return mapping
 
 def get_field_map(src_jira_url):
+    """ Return map of available JIRA fields, keyed by field id. """
     field_api_path = "/rest/api/2/field"
     field_name_map = {}
     url = src_jira_url + field_api_path
     r = requests.get(url);
     fields = r.json()
     for field in fields:
-        if "name" in field:
-            field_name_map[field["name"]] = field
+        if "id" in field:
+            field_name_map[field["id"]] = field
     return field_name_map
 
 def add_missing_issue_fields(src_jira_url, issue, field_map, user_map):
@@ -164,21 +167,21 @@ def add_missing_issue_fields(src_jira_url, issue, field_map, user_map):
                                       "uri": a["content"],
                                       "description": "" })
 
-    # Custom fields. Add the fields you want to pull to the CUSTOM_FIELD_NAMES
+    # Custom fields. Add the fields you want to pull to the CUSTOM_FIELD_IDS
     # array at the top of this file.
     # At the time of this writing, support for doing the mapping for different
     # field types is limited, but this script can easily be augmented to
     # support different field types. Docs on custom field formats are here:
     # https://confluence.atlassian.com/jira/importing-data-from-json-495976468.html#ImportingDatafromJSON-CustomFields
-    for custom_field_name in CUSTOM_FIELD_NAMES:
-        if custom_field_name not in field_map:
-            sys.stderr.write("ERROR: Unable to find custom field '%s' in field map" % (custom_field_name,))
+    for custom_field_id in CUSTOM_FIELD_IDS:
+        if custom_field_id not in field_map:
+            sys.stderr.write("ERROR: Unable to find custom field '%s' in field map" % (custom_field_id,))
             sys.exit(1)
-        field = field_map[custom_field_name]
+        field = field_map[custom_field_id]
         if not field["custom"]:
-            sys.stderr.write("ERROR: Only custom fields are supported in this code path. Field '%s' is not a custom field" % (custom_field_name,))
+            sys.stderr.write("ERROR: Only custom fields are supported in this code path. Field '%s' is not a custom field" % (custom_field_id,))
             sys.exit(1)
-        custom_field_id = field["id"]
+        custom_field_name = field["name"]
         custom_field_type = field["schema"]["type"]
         custom_field_customtype = field["schema"]["custom"]
 
@@ -198,7 +201,7 @@ def add_missing_issue_fields(src_jira_url, issue, field_map, user_map):
                                      "value": rest_issue["fields"][custom_field_id] }
         else:
             # TODO: Add handling for more custom types here.
-            sys.stderr.write("ERROR: Handler needed for custom field '%s' of type '%s'" % (custom_field_name, custom_field_customtype))
+            sys.stderr.write("ERROR: Handler needed for custom field '%s' with name '%s' of type '%s'" % (custom_field_id, custom_field_name, custom_field_customtype))
             sys.exit(1)
 
         if custom_field_out is not None:
