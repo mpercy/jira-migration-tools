@@ -29,7 +29,7 @@ from remap_users import get_user_mappings
 
 # Custom fields. These vary by project. If this doesn't apply to you, just
 # leave the CUSTOM_FIELD_NAMES list blank.
-CUSTOM_FIELD_NAMES = [ "Target Version/s" ]
+CUSTOM_FIELD_NAMES = [ "Target Version/s", "Code Review" ]
 
 # This "Resolution" map is manually constructed by looking at the output from
 # the REST API calls from the source and destination JIRAs. In this case:
@@ -179,25 +179,30 @@ def add_missing_issue_fields(src_jira_url, issue, field_map, user_map):
             sys.stderr.write("ERROR: Only custom fields are supported in this code path. Field '%s' is not a custom field" % (custom_field_name,))
             sys.exit(1)
         custom_field_id = field["id"]
-        custom_field_type = field["schema"]["custom"]
-
-        custom_field_out = None
+        custom_field_type = field["schema"]["type"]
+        custom_field_customtype = field["schema"]["custom"]
 
         # Handle the different types of fields here.
+        custom_field_out = None
 
-        if custom_field_type == "com.atlassian.jira.plugin.system.customfieldtypes:multiversion":
+        if custom_field_customtype == "com.atlassian.jira.plugin.system.customfieldtypes:multiversion":
             # Note: This code path would probably also work for generic arrays of strings.
-            custom_field_out = { "fieldName": custom_field_name, "fieldType": custom_field_type, "value": [] }
+            custom_field_out = { "fieldName": custom_field_name, "fieldType": custom_field_customtype, "value": [] }
             if rest_issue["fields"][custom_field_id]:
                 for entry in rest_issue["fields"][custom_field_id]:
                     custom_field_out["value"].append(entry["name"])
-        # TODO: Add handling for more custom types here.
+        elif custom_field_type == "string":
+            if custom_field_id in rest_issue["fields"] and rest_issue["fields"][custom_field_id] is not None:
+                custom_field_out = { "fieldName": custom_field_name,
+                                     "fieldType": custom_field_customtype,
+                                     "value": rest_issue["fields"][custom_field_id] }
+        else:
+            # TODO: Add handling for more custom types here.
+            sys.stderr.write("ERROR: Handler needed for custom field '%s' of type '%s'" % (custom_field_name, custom_field_customtype))
+            sys.exit(1)
 
         if custom_field_out is not None:
             issue["customFieldValues"].append(custom_field_out)
-        else:
-            sys.stderr.write("ERROR: Handler needed for custom field '%s' of type '%s'" % (custom_field_name, custom_field_type))
-            sys.exit(1)
 
 if __name__ == "__main__":
 
