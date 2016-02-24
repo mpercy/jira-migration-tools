@@ -30,7 +30,9 @@ from remap_users import get_user_mappings
 # Custom fields. These vary by project. If this doesn't apply to you, just
 # leave the CUSTOM_FIELD_IDS list blank.
 CUSTOM_FIELD_IDS = [ "customfield_10060",   # "Target Version/s"
-                     "customfield_10066"    # "Code Review"
+                     "customfield_10066",   # "Code Review" (due to a previous migration, we have several of these fields. This script will merge them.)
+                     "customfield_10177",   # "Code Review"
+                     "customfield_10058",   # "Code Review"
                     ]
 
 # This "Resolution" map is manually constructed by looking at the output from
