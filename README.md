@@ -2,32 +2,45 @@
 
 Tools for migrating between JIRA instances using JSON import/export.
 
+There are several steps involved in migrating a JIRA project from one
+instance to another, and they can be time consuming. The scripts in this
+repository attempt to automate as much as possible. The scripts in this repo
+assume JSON import / export.
+
 The major benefit to using JSON export vs. XML export is that the JIRA and
-plugin versions don’t have to match between the source and destination
+plugin versions don't have to match between the source and destination
 instances. Another benefit is that it is possible to use scripts to munge the
 JSON to help with the migration, as the tools in this repository do. Strangely,
 the XML exported from JIRA has an apparently invalid charset encoding and
 doesn’t parse with a typical XML parser (at least in my experience, using the
 standard Python libs).
 
-The scripts here have the following requirements:
+## Features
+
+* Mapping / rewriting user account ids, including watchers and at-mentions.
+* Migrating Fixed Versions, Components, attachments, and more.
+
+## Known issues
+
+* Lacking support for sub-tasks (see [#1](https://github.com/mpercy/jira-migration-tools/issues/1)):
+  Sub-Tasks will not be associated with their parent issue
+* Lacking support for issue links (see [#2](https://github.com/mpercy/jira-migration-tools/issues/2)):
+  Issue links will not be migrated
+
+## Requirements
+
 * Reasonably new version of JIRA on both sides (JIRA 6.1 should be sufficient,
   not sure what the minimum version is).
 * The machine running the script must be able to simultaneously access the REST
   web service APIs on both the source and the destination JIRA instances.
 
-The scripts provide the following features:
-* Mapping / rewriting user account ids, including watchers and at-mentions.
-* Migrating Fixed Versions, Components, attachments, and more.
+## Contributions
 
-There are several manual steps involved in migrating a JIRA project from one
-instance to another, and they can be time consuming. The scripts in this
-repository attempt to automate as much as possible. Please feel free to submit
-a pull request if you make an improvement to these scripts, such as
-implementing support for more custom field types in
-`add_missing_jira_fields.py`.
+Please submit a pull request if you make an improvement to these scripts, such
+as implementing support for more custom field types in
+`add_missing_jira_fields.py` or addressing any of the known issues above.
 
-Steps to migrate a JIRA project from one instance to another:
+## Steps to migrate a JIRA project from one instance to another
 
 1. Enable JSON export on the source JIRA instance (the instance you are
    migrating away from) as an admin. You must enable both JSON plugins (the
