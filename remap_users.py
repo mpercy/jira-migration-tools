@@ -59,7 +59,7 @@ def get_user_mappings(user_mappings_filename):
             line = line.strip()
             if line.startswith("#") or line == "":
                 continue
-            fields = line.split(None, 1)
+            fields = line.split("=", 1)
             if len(fields) == 2:
                 old, new = fields
             else:
@@ -116,17 +116,19 @@ if __name__ == "__main__":
                 replace_usernames(issue)
 
                 hidden = False
-                for h in issue["history"]:
-                    replace_usernames(h)
-                    if "items" in h:
-                        for item in h["items"]:
-                            replace_usernames(item)
-                            if "field" in item and "newValue" in item and "newDisplayValue" in item:
-                                # Check if the issue is "hidden". If so, we skip it.
-                                if item["field"] == "security" and item["newDisplayValue"] == "Hidden":
-                                    hidden = True
-                for c in issue["comments"]:
-                    replace_usernames(c)
+                if "history" in issue.keys():
+                    for h in issue["history"]:
+                        replace_usernames(h)
+                        if "items" in h:
+                            for item in h["items"]:
+                                replace_usernames(item)
+                                if "field" in item and "newValue" in item and "newDisplayValue" in item:
+                                    # Check if the issue is "hidden". If so, we skip it.
+                                    if item["field"] == "security" and item["newDisplayValue"] == "Hidden":
+                                        hidden = True
+                if "comments" in issue.keys():
+                    for c in issue["comments"]:
+                        replace_usernames(c)
 
                 if hidden:
                     # Simply skip this one.
@@ -134,5 +136,11 @@ if __name__ == "__main__":
                 # The "normal" case.
                 new_issues.append(issue)
             proj["issues"] = new_issues
+
+            new_components = []
+            for component in proj["components"]:
+                replace_usernames(component)
+                new_components.append(component);
+            proj["components"] = new_components
 
         print json.dumps(data, sort_keys=True, indent=2, separators=(',', ': '))

@@ -34,6 +34,7 @@ def get_version_map(src_jira_url, dest_jira_url, project_key):
         url = root + version_api_path
         r = requests.get(url);
         versions = r.json()
+        print versions
         for v in versions:
             version_name_map[v['name']].append(v['id'])
     mapping = {}

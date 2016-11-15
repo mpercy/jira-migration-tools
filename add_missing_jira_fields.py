@@ -29,6 +29,8 @@ from remap_users import get_user_mappings
 
 # Custom fields. These vary by project. If this doesn't apply to you, just
 # leave the CUSTOM_FIELD_IDS list blank.
+# Check https://issues.cloudera.org/rest/api/2/field for field information
+
 CUSTOM_FIELD_IDS = [ "customfield_10060",   # "Target Version/s"
                      "customfield_10066",   # "Code Review" (due to a previous migration, we have several of these fields. This script will merge them.)
                      "customfield_10177",   # "Code Review"
@@ -91,19 +93,15 @@ resolution_map = {
 def get_version_map(src_jira_url, dest_jira_url, project_key):
     version_api_path = "/rest/api/2/project/%s/versions" % (project_key,)
     version_name_map = defaultdict(list)
-    for root in (src_jira_url, dest_jira_url):
-        url = root + version_api_path
-        r = requests.get(url);
-        versions = r.json()
-        for v in versions:
-            version_name_map[v['name']].append(v['id'])
+    url = src_jira_url + version_api_path
+    r = requests.get(url);
+    versions = r.json()
+    for v in versions:
+        version_name_map[v['name']].append(v['id'])
     mapping = {}
     for name in version_name_map:
         l = version_name_map[name]
-        if len(l) != 2:
-            sys.stderr.write("WARN: Version with name '%s' does not appear in both instances\n" % (name,))
-            continue
-        old, new = l
+        old, new = l[0], l[0]
         mapping[old] = new
     return mapping
 
@@ -163,6 +161,8 @@ def add_missing_issue_fields(src_jira_url, issue, field_map, user_map):
         if author_oldname not in user_map:
             sys.stderr.write("ERROR: attachment user '%s' not in username map\n" % (author_oldname,))
             sys.exit(1)
+        if "attachments" not in issue.keys():
+          issue["attachments"] = []
         issue["attachments"].append({ "name": a["filename"],
                                       "attacher": user_map[author_oldname],
                                       "created": a["created"],
@@ -239,6 +239,8 @@ if __name__ == "__main__":
 
                 sys.stderr.write("INFO: Processing %s...\n" % (issue["key"],))
                 add_missing_issue_fields(src_jira_url, issue, field_map, user_map)
+
+                if "history" not in issue.keys(): continue
 
                 for h in issue["history"]:
                     if "items" in h:
