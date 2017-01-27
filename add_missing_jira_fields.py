@@ -90,6 +90,9 @@ resolution_map = {
     # 1000 # "Won't do". This conflicts with "Done" above, so we'll just ignore this.
 }
 
+status_map = {("10000", "Patch Available"): ("1", "Open")}
+status_name_map = {k[1] : v[1] for k,v in status_map.iteritems()}
+
 def get_version_map(src_jira_url, dest_jira_url, project_key):
     version_api_path = "/rest/api/2/project/%s/versions" % (project_key,)
     version_name_map = defaultdict(list)
@@ -240,6 +243,9 @@ if __name__ == "__main__":
                 sys.stderr.write("INFO: Processing %s...\n" % (issue["key"],))
                 add_missing_issue_fields(src_jira_url, issue, field_map, user_map)
 
+                if "status" in issue and issue["status"] in status_name_map:
+                    issue["status"] = status_name_map[issue["status"]]
+
                 if "history" not in issue.keys(): continue
 
                 for h in issue["history"]:
@@ -258,7 +264,12 @@ if __name__ == "__main__":
                                         else:
                                             # TODO: Potentially crash with error in this case.
                                             pass
-
+                                    # Apply version mappings.
+                                    if item["field"] == "status":
+                                        for value, display_value in [("oldValue", "oldDisplayValue"),
+                                                                     ("newValue", "newDisplayValue")]:
+                                            if (item[value], item[display_value]) in status_map:
+                                                (item[value], item[display_value]) = status_map[(item[value], item[display_value])]
                                     # Note: This mapping may not apply to all projects.
                                     # Target Version/s is a JSON-encoded array of ints.
                                     if item["field"] == "Target Version/s":
