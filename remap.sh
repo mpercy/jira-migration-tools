@@ -35,7 +35,7 @@ if [ -z "$6" -o -n "$7" ]; then
   exit 1
 fi
 
-TMPFILE=$(mktemp -t "$OUTFILE.tmp.XXXXXX")
+TMPFILE=$(mktemp)
 ROOT=$(dirname $0)
 
 echo Remapping users...
