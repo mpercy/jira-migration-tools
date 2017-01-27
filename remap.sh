@@ -26,6 +26,9 @@ DEST_URL=$4
 INFILE=$5
 OUTFILE=$6
 
+# Remove null bytes, which cause import to choke and die
+sed -iraw -r 's/([^\])\\u0000/\1/g' "${INFILE}"
+
 if [ -z "$6" -o -n "$7" ]; then
   echo "Usage: $0 user_mappings.tsv users_to_remove.lst src_jira_url dest_jira_url infile outfile.json"
   echo "Example: $0 user_mappings.tsv users_to_remove.lst https://issues.cloudera.org https://issues.apache.org/jira infile.json outfile.json"
