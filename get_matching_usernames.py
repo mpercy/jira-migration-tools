@@ -52,7 +52,7 @@ def get_matching_usernames(manual_username_map,
         candidate_names = upstream_jira.search_users(email)
         if candidate_names:
           result[name] = candidate_names[0].name
-      except e:
+      except Exception as e:
         print >> sys.stderr, e
     print result[name]
   return result
