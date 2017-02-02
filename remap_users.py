@@ -21,6 +21,7 @@ import requests
 import sys
 import time
 from list_users import format_user_profile_link
+import codecs
 
 # Fields with exact username matches.
 EXACT_USERNAME_FIELDS = frozenset(["reporter", "name", "assignee", "author", "oldValue",
@@ -54,7 +55,7 @@ def get_user_mappings(user_mappings_filename):
     user mapping file.
     """
     user_mappings = {}
-    with open(user_mappings_filename, "r") as umf:
+    with codecs.open(user_mappings_filename, "r", "utf-8") as umf:
         for line in umf:
             line = line.strip()
             if line.startswith("#") or line == "":
