@@ -26,8 +26,9 @@ DEST_URL=$4
 INFILE=$5
 OUTFILE=$6
 
+NO_NULLS="$(mktemp)"
 # Remove null bytes, which cause import to choke and die
-sed -iraw -r 's/([^\])\\u0000/\1/g' "${INFILE}"
+sed -r 's/([^\])\\u0000/\1/g' "${INFILE}" >"${NO_NULLS}"
 
 if [ -z "$6" -o -n "$7" ]; then
   echo "Usage: $0 user_mappings.tsv users_to_remove.lst src_jira_url dest_jira_url infile outfile.json"
@@ -39,7 +40,7 @@ TMPFILE=$(mktemp)
 ROOT=$(dirname $0)
 
 echo Remapping users...
-$ROOT/remap_users.py "$MAPPINGS" "$REMOVE_LIST" "$DEST_URL" "$INFILE" > "$TMPFILE"
+$ROOT/remap_users.py "$MAPPINGS" "$REMOVE_LIST" "$DEST_URL" "${NO_NULLS}" > "$TMPFILE"
 
 echo Adding missing fields...
 $ROOT/add_missing_jira_fields.py "$MAPPINGS" "$SOURCE_URL" "$DEST_URL" "$TMPFILE" > "$OUTFILE"
