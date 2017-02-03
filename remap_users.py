@@ -96,6 +96,7 @@ if __name__ == "__main__":
                     sys.stderr.write("ERROR: The following users were not found in any mapping / exclusion files:\n")
                     sys.stderr.write("%s\n" % ('='*80,))
                 sys.stderr.write("%s\n" % (format_user_profile_link(user, dest_jira_url),))
+                print >>sys.stderr, type(user["name"]), user["name"]
         if not found_all_users:
             sys.exit(1)
 
