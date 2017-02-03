@@ -123,7 +123,13 @@ def get_field_map(src_jira_url):
 def add_missing_issue_fields(src_jira_url, issue, field_map, user_map):
     issue_api_path = "/rest/api/2/issue/%s" % (issue["key"],)
     url = src_jira_url + issue_api_path
-    r = requests.get(url);
+    while True:
+      try:
+        r = requests.get(url);
+        break
+      except requests.exceptions.ConnectionError:
+        print "loop"
+        continue
     rest_issue = r.json()
 
     # Note: The REST issues API has a different JSON schema than the JSON import/export API.
