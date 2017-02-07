@@ -27,6 +27,8 @@ import time
 from collections import defaultdict
 from remap_users import get_user_mappings
 
+requests.packages.urllib3.disable_warnings()
+
 # Custom fields. These vary by project. If this doesn't apply to you, just
 # leave the CUSTOM_FIELD_IDS list blank.
 # Check https://issues.cloudera.org/rest/api/2/field for field information

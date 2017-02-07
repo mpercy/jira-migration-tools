@@ -23,6 +23,8 @@ import time
 from list_users import format_user_profile_link
 import codecs
 
+requests.packages.urllib3.disable_warnings()
+
 # Fields with exact username matches.
 EXACT_USERNAME_FIELDS = frozenset(["reporter", "name", "assignee", "author", "oldValue",
                                    "newValue", "voters", "watchers", "lead"])

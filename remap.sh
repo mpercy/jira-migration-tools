@@ -37,14 +37,24 @@ if [ -z "$6" -o -n "$7" ]; then
 fi
 
 TMPFILE=$(mktemp)
+TMPFILE2=$(mktemp)
+TMPFILE3=$(mktemp)
 ROOT=$(dirname $0)
 
 echo Remapping users...
 $ROOT/remap_users.py "$MAPPINGS" "$REMOVE_LIST" "$DEST_URL" "${NO_NULLS}" > "$TMPFILE"
 
 echo Adding missing fields...
-$ROOT/add_missing_jira_fields.py "$MAPPINGS" "$SOURCE_URL" "$DEST_URL" "$TMPFILE" > "$OUTFILE"
+$ROOT/add_missing_jira_fields.py "$MAPPINGS" "$SOURCE_URL" "$DEST_URL" "$TMPFILE" > "$TMPFILE2"
+
+echo Fixing sub-task links...
+$ROOT/link_sub_tasks.py "$TMPFILE2" "$SOURCE_URL" > "$TMPFILE3"
+
+# Remove the null bytes again, just in case?
+sed -r 's/([^\])\\u0000/\1/g' "${TMPFILE3}" >"${OUTFILE}"
 
 rm "$TMPFILE"
+rm "$TMPFILE2"
+rm "$TMPFILE3"
 echo Done
 exit 0
