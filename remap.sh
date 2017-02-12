@@ -23,16 +23,21 @@ MAPPINGS=$1
 REMOVE_LIST=$2
 SOURCE_URL=$3
 DEST_URL=$4
-INFILE=$5
-OUTFILE=$6
+OUTFILE=$5
+INFILES=("${@:6}")
 
+echo "Unioning"
+INFILE="$(mktemp)"
+./union.py "${INFILES[@]}" >${INFILE}
+
+echo "removing nulls"
 NO_NULLS="$(mktemp)"
 # Remove null bytes, which cause import to choke and die
 sed -r 's/([^\])\\u0000/\1/g' "${INFILE}" >"${NO_NULLS}"
 
-if [ -z "$6" -o -n "$7" ]; then
-  echo "Usage: $0 user_mappings.tsv users_to_remove.lst src_jira_url dest_jira_url infile outfile.json"
-  echo "Example: $0 user_mappings.tsv users_to_remove.lst https://issues.cloudera.org https://issues.apache.org/jira infile.json outfile.json"
+if [[ ${#@} -lt 6 ]]; then
+  echo "Usage: $0 user_mappings.tsv users_to_remove.lst src_jira_url dest_jira_url outfile.json infile1 infile2 ... "
+  echo "Example: $0 user_mappings.tsv users_to_remove.lst https://issues.cloudera.org https://issues.apache.org/jira outfile.json infile1.json infile2.json infile3.json"
   exit 1
 fi
 
