@@ -71,6 +71,13 @@ def get_user_mappings(user_mappings_filename):
             user_mappings[old] = new
     return user_mappings
 
+
+def make_case_sensitive_username_map(export):
+  result = {}
+  for user in export["users"]:
+    result[user["name"].lower()] = user["name"]
+  return result
+
 if __name__ == "__main__":
 
     if len(sys.argv) != 5:
@@ -88,6 +95,11 @@ if __name__ == "__main__":
 
     with open(json_filename, "r") as f:
         data = json.load(f)
+        case_sensitive_username_map = make_case_sensitive_username_map(data)
+        for proj in data["projects"]:
+            for issue in proj["issues"]:
+                if "voters" in issue:
+                    issue["voters"] = [case_sensitive_username_map[user] for user in issue["voters"]]
 
         # Validate that we have accounted for all users in our mappings.
         found_all_users = True
