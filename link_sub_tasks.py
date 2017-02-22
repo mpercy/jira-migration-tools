@@ -29,6 +29,58 @@ from jira.exceptions import JIRAError
 
 requests.packages.urllib3.disable_warnings()
 
+link_mappings = {"Block": "Blocker", "Blocker": "Blocker", "Duplicate": "Duplicate",
+        "Relate": "Related", "Related": "Related"}
+processed_links = []
+
+def process_subtasks(jira, issue, links):
+    if "issueType" in issue.keys() and issue["issueType"] != "Sub-task":
+      return
+    sys.stderr.write("INFO: Processing subtasks for %s...\n" % (issue["key"],))
+    try:
+      issue_json = jira.issue(issue["key"]).raw
+    except JIRAError as e:
+      return
+    if "parent" not in issue_json["fields"].keys(): return
+    parent_key = issue_json["fields"]["parent"]["key"]
+
+    # Build the entry for links list.
+    sub_task_link = {}
+    sub_task_link["name"] = "sub-task-link"
+    sub_task_link["sourceId"] = issue["key"]
+    sub_task_link["destinationId"] = parent_key
+    links.append(sub_task_link)
+
+# Valid Cloudera jira issue types: https://issues.cloudera.org/rest/api/2/issueLinkType
+# Corresponding Apache jira issue types: https://issues.apache.org/jira/rest/api/2/issueLinkType
+# Here are some valid mappings:
+
+# Block/Blocker -> Blocker
+# Duplicate -> Duplicate
+# Relate/Related -> Related
+# This information is hard coded in the link_mappings dict. TODO: Build it reading from the URLs.
+def process_links(jira, issue, links):
+    try:
+      issue_json = jira.issue(issue["key"]).raw
+    except JIRAError as e:
+      return
+    if "issuelinks" not in issue_json["fields"].keys() or len(issue_json["fields"]["issuelinks"]) == 0:
+      return
+    global link_mappings
+    global process_links
+    for link in issue_json["fields"]["issuelinks"]:
+        if link["id"] in processed_links: continue
+        processed_links.append(link["id"])
+        if "outwardIssue" not in link.keys(): continue
+        link_name = link["type"]["name"]
+        if link_name in link_mappings.keys():
+            link_name = link_mappings[link_name]
+        direct_link = {}
+        direct_link["name"] = link_name
+        direct_link["sourceId"] = issue["key"]
+        direct_link["destinationId"] = link["outwardIssue"]["key"]
+        links.append(direct_link)
+
 if __name__ == "__main__":
 
     if len(sys.argv) < 2:
@@ -49,23 +101,8 @@ if __name__ == "__main__":
                     project_key, _ = issue["key"].split("-", 2)
                 # Use an externalId that is same as the issue key
                 issue["externalId"] = issue["key"]
-                if "issueType" in issue.keys() and issue["issueType"] != "Sub-task":
-                    continue
-                sys.stderr.write("INFO: Processing subtasks for %s...\n" % (issue["key"],))
-                try:
-                  issue_json = jira.issue(issue["key"]).raw
-                except JIRAError as e:
-                  continue
-                if "parent" not in issue_json["fields"].keys(): continue
-                parent_key = issue_json["fields"]["parent"]["key"]
-
-                # Build the entry for links list.
-                sub_task_link = {}
-                sub_task_link["name"] = "sub-task-link"
-                sub_task_link["sourceId"] = issue["key"]
-                sub_task_link["destinationId"] = parent_key
-
-                links.append(sub_task_link)
+                process_subtasks(jira, issue, links)
+                process_links(jira, issue, links)
 
     data["links"] = links
     print json.dumps(data, sort_keys=True, indent=2, separators=(',', ': '))
