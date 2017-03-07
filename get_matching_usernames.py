@@ -48,14 +48,14 @@ def get_matching_usernames(manual_username_map,
       result[name] = manual_username_map[name]
     else:
       result[name] = name + "_impala_" + hashlib.md5(name).hexdigest()[0:4]
-      while True:
-        try:
-          candidate_names = upstream_jira.search_users(email)
-          if candidate_names:
-            result[name] = candidate_names[0].name
-          break
-        except Exception as e:
-          print >> sys.stderr, e
+    while True:
+      try:
+        candidate_names = upstream_jira.search_users(email)
+        if candidate_names:
+          result[name] = candidate_names[0].name
+        break
+      except Exception as e:
+        print >> sys.stderr, e
     print result[name]
   return result
 
