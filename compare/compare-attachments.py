@@ -81,7 +81,7 @@ def compare_export_attachments(json_export, minkey, maxkey, new_server):
     for json_issue in json_project["issues"]:
       key = json_issue["key"]
       key_num = int(KEY_REGEX.match(key).group(1))
-      if key_num < minkey_num or key_num > maxkey_num: continue
+      if key_num < minkey_num or key_num >= maxkey_num: continue
       sys.stdout.write(key)
       sys.stdout.flush()
       from_json = get_json_attachments(json_issue)
@@ -114,7 +114,7 @@ if __name__ == "__main__":
   old.add_argument("--json", help="Filename of the JSON export")
   old.add_argument("--old_server", default="https://issues.cloudera.org", help=" ")
   parser.add_argument("--minkey", default="IMPALA-1", help=" ")
-  parser.add_argument("--maxkey", default="IMPALA-5999", help=" ")
+  parser.add_argument("--maxkey", default="IMPALA-6000", help=" ")
   parser.add_argument("--new_server", default="https://issues-test.apache.org/jira",
                       help=" ")
   args = parser.parse_args()
