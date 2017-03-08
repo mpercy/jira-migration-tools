@@ -87,13 +87,14 @@ def get_json_attachments(issue_dict):
       result.add((attachment["name"], hash_filename(filename)))
   return result
 
+KEY_REGEX = re.compile("^.+-([1-9][0-9]*)$")
+
 def compare_export_attachments(json_export, minkey):
-  KEY_NUMBER_EXTRACTOR = re.compile(r"^[^\d]+-(\d+)$")
-  minkey_num = int(KEY_NUMBER_EXTRACTOR.match(minkey).group(1))
+  minkey_num = int(KEY_REGEX.match(minkey).group(1))
   for json_project in json_export["projects"]:
     for json_issue in json_project["issues"]:
       key = json_issue["key"]
-      key_num = int(KEY_NUMBER_EXTRACTOR.match(key).group(1))
+      key_num = int(KEY_REGEX.match(key).group(1))
       if key_num < minkey_num: continue
       sys.stdout.write(key)
       sys.stdout.flush()
@@ -121,8 +122,6 @@ def compare_xml_attachments(key, server1, server2):
     print attachments2, "\n"
     print attachments1.symmetric_difference(attachments2), "\n"
 
-KEY_REGEX = "^IMPALA-([1-9][0-9]*)$"
-
 if __name__ == "__main__":
   if len(sys.argv) < 2 or sys.argv[1] in ["help", "-help", "--help", "-h"]:
     print "Usage:  ", sys.argv[0], "IMPORTED_JSON [MINIMUM_ISSUE_KEY]"
@@ -131,14 +130,14 @@ if __name__ == "__main__":
     print "        ", sys.argv[0], "MINIMUM_ISSUE_KEY MAXIMUM_ISSUE_KEY"
     print "Example:", sys.argv[0], "IMPALA-123        IMPALA-4567"
   else:
-    if len(sys.argv) == 2 or None is re.match(KEY_REGEX, sys.argv[1]):
+    if len(sys.argv) == 2 or None is KEY_REGEX.match(sys.argv[1]):
       assert len(sys.argv) <= 3
       compare_export_attachments(json.load(open(sys.argv[1])),
                                  sys.argv[2] if len(sys.argv) > 2 else "")
     else:
       assert len(sys.argv) == 3
-      start = int(re.match(KEY_REGEX, sys.argv[1]).groups()[0])
-      end   = int(re.match(KEY_REGEX, sys.argv[2]).groups()[0])
+      start = int(KEY_REGEX.match(sys.argv[1]).group(1))
+      end   = int(KEY_REGEX.match(sys.argv[2]).group(1))
       for key in xrange(start, end):
         compare_xml_attachments("IMPALA-{}".format(key),
                                 "https://issues.cloudera.org",
