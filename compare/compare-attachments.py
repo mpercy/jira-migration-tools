@@ -88,10 +88,13 @@ def get_json_attachments(issue_dict):
   return result
 
 def compare_export_attachments(json_export, minkey):
+  KEY_NUMBER_EXTRACTOR = re.compile(r"^[^\d]+-(\d+)$")
+  minkey_num = int(KEY_NUMBER_EXTRACTOR.match(minkey).group(1))
   for json_project in json_export["projects"]:
     for json_issue in json_project["issues"]:
       key = json_issue["key"]
-      if key < minkey: continue
+      key_num = int(KEY_NUMBER_EXTRACTOR.match(key).group(1))
+      if key_num < minkey_num: continue
       sys.stdout.write(key)
       sys.stdout.flush()
       from_json = get_json_attachments(json_issue)
