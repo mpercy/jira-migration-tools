@@ -20,7 +20,7 @@ requests.packages.urllib3.disable_warnings()
 EQUAL_FIELD_IDS = {
     "versions",
     "assignee",
-    "attachment",
+#    "attachment", # attachments are compared separately
     "comment",
     "components",
     "created",
@@ -95,7 +95,7 @@ IGNORABLE_PATHS = {'priority.iconUrl', 'comment.comments.self', 'comment.comment
                    'issuetype.avatarId', 'project.self', 'status.description',
                    'resolution.id', 'resolution.self', 'components.self', 'components.id',
                    'comment.comments.updated', 'issuetype.self', 'issuetype.id',
-#                   'attachment', # attachments are checked separately
+                   'attachment', # attachments are checked separately
 }
 
 mismatches = set()
@@ -121,56 +121,10 @@ for k, v in NAME_SUBS:
 
 NAME_CONTEXTS = [u'[~{}]']
 
-def compare_urls(url1, url2):
-  _,file1 = tempfile.mkstemp()
-  _,file2 = tempfile.mkstemp()
-  print url1
-  print url2
-  print file1, file2
-  # TODO: what about when an attachment is missing? list order will be wrong
-  urllib.urlretrieve(url1, file1)
-  urllib.urlretrieve(url2, file2)
-  result = filecmp.cmp(file1, file2)
-  if result:
-    os.remove(file1)
-    os.remove(file2)
-  return result
-
-def compare_attachments(id1, id2):
-  at1 = cloudera_jira.attachment(id1)
-  at2 = apache_jira.attachment(id2)
-  return at1.get() == at2.get()
-  j = at2.iter_content(20)
-  for s1 in at1.iter_content(20):
-    try:
-      s2 = j.next()
-    except StopIteration:
-      print 'stop in loop'
-      return False
-    if s1 != s2:
-      print 'non-equal'
-      print s1
-      print s2
-      return False
-  try:
-    j.next()
-    print 'not done with j'
-    return False
-  except StopIteration:
-    return True
-
 # Compare field1 and field2 and print if they don't match
 def compare_and_print_fields(field1, field2, comp, path=''):
   global mismatches
   if path in IGNORABLE_PATHS: return
-  if path == 'attachment' and type(field1) != list:
-    #'filename' and 'content' (URL)
-    compare_and_print_fields(field1['filename'], field2['filename'], comp, path + '.' + 'filename')
-    #if not compare_urls(field1['content'], field2['content']):
-    #  print "Attachments differ: {0} {1}".format(field1['content'], field2['content'])
-    if not compare_attachments(field1['id'], field2['id']):
-      print "Attachments differ: {0} {1}".format(field1['content'], field2['content'])
-    return
   if type(field1) not in [list, dict] and type(field2) not in [list, dict]:
     if (path, field1, field2) in mismatches: return
   if type(field1) == type(field2) == unicode:
