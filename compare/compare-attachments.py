@@ -98,7 +98,7 @@ def compare_xml_attachments(key, server1, server2):
   sys.stdout.flush()
   attachments1 = get_xml_attachments(key, server1)
   attachments2 = get_xml_attachments(key, server2)
-  if len(attachments2) == 0 == len(attachments2):
+  if len(attachments1) == 0 == len(attachments2):
     return
   elif attachments1 == attachments2:
     print "\n{}: SUCCEED".format(key)
