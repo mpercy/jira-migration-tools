@@ -70,8 +70,8 @@ def process_links(jira, issue, links):
     global process_links
     for link in issue_json["fields"]["issuelinks"]:
         if link["id"] in processed_links: continue
-        processed_links.append(link["id"])
         if "outwardIssue" not in link.keys(): continue
+        processed_links.append(link["id"])
         link_name = link["type"]["name"]
         if link_name in link_mappings.keys():
             link_name = link_mappings[link_name]
