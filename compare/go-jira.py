@@ -227,4 +227,4 @@ def compare_all_jiras(start, max_range):
 
 
 # Example usage. Compares jiras from IMPALA-101 to IMPALA-200
-compare_all_jiras(512, 1024)
+compare_all_jiras(1, 6000)
