@@ -111,13 +111,24 @@ with codecs.open(sys.argv[1], 'r', 'utf-8') as f:
     if line.find('=') >= 0:
       [old, new] = line.split('=')
       NAME_SUBS += [(old, new.strip())]
+      try:
+        encoded_old = urllib.quote_plus(old)
+        if encoded_old != old:
+          NAME_SUBS += [(encoded_old, new.strip())]
+      except:
+        pass
 
 COMPILED_RES = []
 
 for k, v in NAME_SUBS:
   COMPILED_RES += [(re.compile(u'^{}$'.format(k)), v)]
+  newv = v
+  try:
+    newv = urllib.quote_plus(v)
+  except:
+    pass
   COMPILED_RES += [(re.compile(u'user\?username={}$'.format(k)),
-                    u'user?username={}'.format(v.replace(u"@", u"%40")))]
+                    u'user?username={}'.format(newv))]
 
 NAME_CONTEXTS = [u'[~{}]']
 
