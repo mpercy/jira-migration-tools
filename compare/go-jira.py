@@ -85,7 +85,8 @@ FIELD_MAP = dict({"customfield_" + str(keynum): "customfield_" + str(valnum) for
 apache_jira = JIRA('https://issues-test.apache.org/jira')
 cloudera_jira = JIRA('https://issues.cloudera.org')
 
-IGNORABLE_KEYS = {'16x16', '24x24', '32x32', '48x48', 'timeZone', 'displayName'}
+IGNORABLE_KEYS = {'16x16', '24x24', '32x32', '48x48', 'timeZone', 'displayName',
+                  'iconUrl'}
 IGNORABLE_PATHS = {'priority.iconUrl', 'comment.comments.self', 'comment.comments.id',
                    'resolution.description', 'fixVersions.self', 'fixVersions.id',
                    'versions.self', 'versions.id', 'issuetype.iconUrl',
