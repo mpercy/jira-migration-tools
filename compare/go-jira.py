@@ -86,7 +86,7 @@ apache_jira = JIRA('https://issues-test.apache.org/jira')
 cloudera_jira = JIRA('https://issues.cloudera.org')
 
 IGNORABLE_KEYS = {'16x16', '24x24', '32x32', '48x48', 'timeZone', 'displayName',
-                  'iconUrl'}
+                  'iconUrl', 'avatarId'}
 IGNORABLE_PATHS = {'priority.iconUrl', 'comment.comments.self', 'comment.comments.id',
                    'resolution.description', 'fixVersions.self', 'fixVersions.id',
                    'versions.self', 'versions.id', 'issuetype.iconUrl',
@@ -170,6 +170,7 @@ def compare_and_print_fields(mismatches, field1, field2, comp, path=''):
   if type(field1) == type(field2):
     if type(field1) == dict:
       for k,v in field1.iteritems():
+        if k in IGNORABLE_KEYS: continue
         pk = path + '.'+k
         if pk in IGNORABLE_PATHS: continue
         if k not in field2:
@@ -184,6 +185,7 @@ def compare_and_print_fields(mismatches, field1, field2, comp, path=''):
                                                  path + '.' + str(k))
           del(field2[k])
       for k,v in field2.iteritems():
+        if k in IGNORABLE_KEYS: continue
         pk = path + '.' + k
         if pk in IGNORABLE_PATHS: continue
         if v:
