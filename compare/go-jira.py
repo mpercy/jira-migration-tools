@@ -107,7 +107,7 @@ IGNORABLE_PATHS = {'priority.iconUrl', 'comment.comments.self', 'comment.comment
                    'issuelinks.outwardIssue.fields.issuetype.id'
 }
 
-mismatches = set()
+#mismatches = set()
 
 SUBSTITUTIONS = [('issues.cloudera.org/browse/HUE','HUE_PLACEHOLDER_ASF'),
                  ('issues.cloudera.org', 'issues-test.apache.org/jira'),
@@ -147,11 +147,12 @@ for k, v in NAME_SUBS:
 NAME_CONTEXTS = [u'[~{}]']
 
 # Compare field1 and field2 and print if they don't match
-def compare_and_print_fields(field1, field2, comp, path=''):
-  global mismatches
-  if path in IGNORABLE_PATHS: return
+def compare_and_print_fields(mismatches, field1, field2, comp, path=''):
+  #global mismatches
+  result = ""
+  if path in IGNORABLE_PATHS: return result
   if type(field1) not in [list, dict] and type(field2) not in [list, dict]:
-    if (path, field1, field2) in mismatches: return
+    if (path, field1, field2) in mismatches: return result
   if type(field1) == type(field2) == unicode:
     if path in RECASE_NAME_FIELDS and field1 in RECASE_NAMES:
       field1 = NAME_SUBS_MAP[RECASE_NAMES[field1]].lower()
@@ -165,7 +166,7 @@ def compare_and_print_fields(field1, field2, comp, path=''):
       field1 = re.sub(k, v, field1)
     field1 = field1.strip()
     field2 = field2.strip()
-  if field1 == field2: return
+  if field1 == field2: return result
   if type(field1) == type(field2):
     if type(field1) == dict:
       for k,v in field1.iteritems():
@@ -174,12 +175,13 @@ def compare_and_print_fields(field1, field2, comp, path=''):
         if k not in field2:
           if v:
             if (pk,v) not in mismatches:
-              mismatches.add((pk,v))
-              print "Missing key:", pk, repr(v)
+              mismatches[(pk,v)] = ()
+              result += "Missing key: {} {}\n".format(pk, repr(v))
         else:
           if field1[k] != field2[k]:
             if k not in IGNORABLE_KEYS:
-              compare_and_print_fields(v, field2[k], comp, path + '.' + str(k))
+              result += compare_and_print_fields(mismatches, v, field2[k], comp,
+                                                 path + '.' + str(k))
           del(field2[k])
       for k,v in field2.iteritems():
         pk = path + '.' + k
@@ -187,56 +189,57 @@ def compare_and_print_fields(field1, field2, comp, path=''):
         if v:
           if type(v) == dict: v = repr(v)
           if (pk,v) not in mismatches:
-            mismatches.add((pk,v))
-            print "Missing key:", pk, repr(v)
-      return
+            mismatches[(pk,v)] = ()
+            result += "Missing key: {}\n".format(pk, repr(v))
+      return result
     elif type(field1) == list:
       for i in range(0, len(field1)):
         if i >= len(field2):
-          print "Missing list item (in LHS only):", path, field1[i]
+          result += "Missing list item (in LHS only): {} {}\n".format(path, field1[i])
         else:
-          compare_and_print_fields(field1[i], field2[i], comp, path)
+          result += compare_and_print_fields(mismatches, field1[i], field2[i], comp, path)
       if len(field2) > len(field1):
-        print "Missing list items (in RHS only):", path, field2[len(field1):]
-      return
+        result += "Missing list items (in RHS only): {} {}\n".format(path, field2[len(field1):])
+      return result
   if type(field1) in [list, dict] or type(field2) in [list, dict]:
-    print "Mismatched", path, field1, field2
+    result += "Mismatched {} {} {}\n".format(path, field1, field2)
   elif (path, field1, field2) not in mismatches:
-    mismatches.add((path, field1, field2))
-    print "Mismatched", path, repr(field1), repr(field2)
+    mismatches[(path, field1, field2)] = ()
+    result += "Mismatched {} {} {}\n".format(path, repr(field1), repr(field2))
+  return result
 
 
 def compare_and_print_lists(list1, list2, comp):
     if len(list1) != len(list2):
-        print "Mismatched length for fields: " + comp, list1, list2
-        return
+        return "Mismatched length for fields: {} {} {}\n".format(comp, list1, list2)
     # Sort the two lists and compare the corresponding fields.
     list1.sort()
     list2.sort()
     for i in range(0, len(list1)):
         if list1[i] == list2[i]: continue
-        print "Mismatched lists at index : ", i, comp, str(list1), str(list2)
-        break
+        return "Mismatched lists at index : {} {} {} {}\n".format(i, comp, str(list1), str(list2))
+    return ""
 
 # Compare two jiras src and dest. They should be in the raw json format
-def compare_jiras(src, dest):
-    print "Comparing " + src["key"] + " with " + dest["key"]
+def compare_jiras(mismatches, src, dest):
+    result = "Comparing " + src["key"] + " with " + dest["key"]
     for cloudera_field, apache_field in FIELD_MAP.iteritems():
       if cloudera_field in src["fields"] and apache_field in dest["fields"]:
-        compare_and_print_fields(src["fields"][cloudera_field],
+        output = compare_and_print_fields(mismatches, src["fields"][cloudera_field],
                                  dest["fields"][apache_field],
                                  str((cloudera_field, apache_field)),
                                  cloudera_field)
+        if output: result += "\n" + output.strip()
       if (cloudera_field in src["fields"] and src["fields"][cloudera_field]
           and apache_field not in dest["fields"]):
-        print "Missing field in apache:", (cloudera_field, apache_field,
+        result += "Missing field in apache: {} {} {}".format(cloudera_field, apache_field,
                                            src["fields"][cloudera_field])
       if (apache_field in dest["fields"] and dest["fields"][apache_field]
           and cloudera_field not in src["fields"]):
-        print "Missing field in cloudera:", (cloudera_field, apache_field,
+        result += "Missing field in cloudera: {} {} {}".format(cloudera_field, apache_field,
                                              dest["fields"][apache_field])
 
-    return
+    return result
 
 MISSING_JIRAS = [335, 566, 830, 854]
 
@@ -252,6 +255,23 @@ def compare_all_jiras(start, max_range):
       except JIRAError as e:
         print "Error fetching jira " + str(i) + ":" + format(e)
 
+def compare_one_jira((mismatches, num)):
+  if num in MISSING_JIRAS: return
+  try:
+    src_issue = cloudera_jira.issue('IMPALA-' + str(num)).raw
+    dest_issue = apache_jira.issue('IMPALA-' + str(num)).raw
+    print compare_jiras(mismatches, src_issue, dest_issue).strip()
+  except JIRAError as e:
+    print "Error fetching jira " + str(num) + ":" + format(e)
+  sys.stdout.flush()
 
-# Example usage. Compares jiras from IMPALA-101 to IMPALA-200
-compare_all_jiras(1, 6000)
+from multiprocessing import Pool, Manager
+from multiprocessing.dummy import Pool as ThreadPool
+
+def parallel_compare_all_jiras(begin, end):
+  p = Pool(64)
+  manager = Manager()
+  mismatches = manager.dict()
+  p.map(compare_one_jira, [(mismatches, i) for i in xrange(begin, end)])
+
+parallel_compare_all_jiras(1,6000)
