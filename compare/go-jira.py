@@ -98,6 +98,13 @@ IGNORABLE_PATHS = {'priority.iconUrl', 'comment.comments.self', 'comment.comment
                    'comment.comments.updated', 'issuetype.self', 'issuetype.id',
                    'attachment', # attachments are checked separately
                    'comment.comments.updateAuthor',
+                   'issuelinks.self', 'issuelinks.inwardIssue.id',
+                   'issuelinks.inwardIssue.self', 'issuelinks.type.self',
+                   'issuelinks.type.id', 'issuelinks.id', 'issuelinks.outwardIssue.self',
+                   'issuelinks.outwardIssue.id', 'subtasks.fields.issuetype.self',
+                   'subtasks.fields.issuetype.id', 'subtasks.self', 'subtasks.id',
+                   'issuelinks.outwardIssue.fields.issuetype.self',
+                   'issuelinks.outwardIssue.fields.issuetype.id'
 }
 
 mismatches = set()
