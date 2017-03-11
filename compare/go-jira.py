@@ -222,21 +222,22 @@ def compare_and_print_lists(list1, list2, comp):
 
 # Compare two jiras src and dest. They should be in the raw json format
 def compare_jiras(mismatches, src, dest):
-    result = "Comparing " + src["key"] + " with " + dest["key"]
+    #result = "Comparing " + src["key"] + " with " + dest["key"]
+    result = ""
     for cloudera_field, apache_field in FIELD_MAP.iteritems():
       if cloudera_field in src["fields"] and apache_field in dest["fields"]:
         output = compare_and_print_fields(mismatches, src["fields"][cloudera_field],
                                  dest["fields"][apache_field],
                                  str((cloudera_field, apache_field)),
                                  cloudera_field)
-        if output: result += "\n" + output.strip()
+        if output: result += output.strip() + "\n"
       if (cloudera_field in src["fields"] and src["fields"][cloudera_field]
           and apache_field not in dest["fields"]):
-        result += "Missing field in apache: {} {} {}".format(cloudera_field, apache_field,
+        result += "Missing field in apache: {} {} {}\n".format(cloudera_field, apache_field,
                                            src["fields"][cloudera_field])
       if (apache_field in dest["fields"] and dest["fields"][apache_field]
           and cloudera_field not in src["fields"]):
-        result += "Missing field in cloudera: {} {} {}".format(cloudera_field, apache_field,
+        result += "Missing field in cloudera: {} {} {}\n".format(cloudera_field, apache_field,
                                              dest["fields"][apache_field])
 
     return result
@@ -260,7 +261,9 @@ def compare_one_jira((mismatches, num)):
   try:
     src_issue = cloudera_jira.issue('IMPALA-' + str(num)).raw
     dest_issue = apache_jira.issue('IMPALA-' + str(num)).raw
-    print compare_jiras(mismatches, src_issue, dest_issue).strip()
+    result = compare_jiras(mismatches, src_issue, dest_issue).strip()
+    if result:
+      print "Comparing IMPALA-{}\n{}".format(num,result)
   except JIRAError as e:
     print "Error fetching jira " + str(num) + ":" + format(e)
   sys.stdout.flush()
@@ -274,4 +277,4 @@ def parallel_compare_all_jiras(begin, end):
   mismatches = manager.dict()
   p.map(compare_one_jira, [(mismatches, i) for i in xrange(begin, end)])
 
-parallel_compare_all_jiras(1,6000)
+parallel_compare_all_jiras(1,5200)
