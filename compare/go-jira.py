@@ -130,7 +130,7 @@ with codecs.open(sys.argv[1], 'r', 'utf-8') as f:
 NAME_SUBS_MAP = {k: v for (k,v) in NAME_SUBS}
 # Take a lowercased name and bring it back to its mixed case original
 RECASE_NAMES = {k.lower(): k for k,_ in NAME_SUBS}
-RECASE_NAME_FIELDS = {'comment.comments.author.key'}
+RECASE_NAME_FIELDS = {'comment.comments.author.key', 'reporter.key', 'assignee.key'}
 
 COMPILED_RES = []
 
