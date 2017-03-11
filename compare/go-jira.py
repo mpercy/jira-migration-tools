@@ -120,6 +120,11 @@ with codecs.open(sys.argv[1], 'r', 'utf-8') as f:
       except:
         pass
 
+NAME_SUBS_MAP = {k: v for (k,v) in NAME_SUBS}
+# Take a lowercased name and bring it back to its mixed case original
+RECASE_NAMES = {k.lower(): k for k,_ in NAME_SUBS}
+RECASE_NAME_FIELDS = {'comment.comments.author.key'}
+
 COMPILED_RES = []
 
 for k, v in NAME_SUBS:
@@ -141,6 +146,8 @@ def compare_and_print_fields(field1, field2, comp, path=''):
   if type(field1) not in [list, dict] and type(field2) not in [list, dict]:
     if (path, field1, field2) in mismatches: return
   if type(field1) == type(field2) == unicode:
+    if path in RECASE_NAME_FIELDS and field1 in RECASE_NAMES:
+      field1 = NAME_SUBS_MAP[RECASE_NAMES[field1]].lower()
     for k,v in SUBSTITUTIONS:
       if path != 'description':
         field1 = field1.replace(k, v)
