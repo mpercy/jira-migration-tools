@@ -97,6 +97,7 @@ IGNORABLE_PATHS = {'priority.iconUrl', 'comment.comments.self', 'comment.comment
                    'resolution.id', 'resolution.self', 'components.self', 'components.id',
                    'comment.comments.updated', 'issuetype.self', 'issuetype.id',
                    'attachment', # attachments are checked separately
+                   'comment.comments.updateAuthor',
 }
 
 mismatches = set()
