@@ -82,7 +82,7 @@ FIELD_MAP = dict({"customfield_" + str(keynum): "customfield_" + str(valnum) for
 # - [fields][comments] - List of comments
 # - [fields][votes][votes] - No. of votes.
 
-apache_jira = JIRA('https://issues-test.apache.org/jira')
+apache_jira = JIRA('https://issues.apache.org/jira')
 cloudera_jira = JIRA('https://issues.cloudera.org')
 
 IGNORABLE_KEYS = {'16x16', '24x24', '32x32', '48x48', 'timeZone', 'displayName',
@@ -110,7 +110,7 @@ IGNORABLE_PATHS = {'priority.iconUrl', 'comment.comments.self', 'comment.comment
 #mismatches = set()
 
 SUBSTITUTIONS = [('issues.cloudera.org/browse/HUE','HUE_PLACEHOLDER_ASF'),
-                 ('issues.cloudera.org', 'issues-test.apache.org/jira'),
+                 ('issues.cloudera.org', 'issues.apache.org/jira'),
                  ('HUE_PLACEHOLDER_ASF','issues.cloudera.org/browse/HUE')]
 
 NAME_SUBS = []
