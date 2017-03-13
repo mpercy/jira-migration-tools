@@ -283,7 +283,7 @@ from multiprocessing import Pool, Manager
 from multiprocessing.dummy import Pool as ThreadPool
 
 def parallel_compare_all_jiras(begin, end):
-  p = Pool(64)
+  p = Pool(16)
   manager = Manager()
   mismatches = manager.dict()
   p.map(compare_one_jira, [(mismatches, i) for i in xrange(begin, end)])
