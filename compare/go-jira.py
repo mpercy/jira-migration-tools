@@ -175,6 +175,7 @@ def compare_and_print_fields(mismatches, field1, field2, comp, path=''):
         if pk in IGNORABLE_PATHS: continue
         if k not in field2:
           if v:
+            if type(v) == dict: v = repr(v)
             if (pk,v) not in mismatches:
               mismatches[(pk,v)] = ()
               result += "Missing key: {} {}\n".format(pk, repr(v))
