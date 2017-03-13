@@ -104,7 +104,15 @@ IGNORABLE_PATHS = {'priority.iconUrl', 'comment.comments.self', 'comment.comment
                    'issuelinks.outwardIssue.id', 'subtasks.fields.issuetype.self',
                    'subtasks.fields.issuetype.id', 'subtasks.self', 'subtasks.id',
                    'issuelinks.outwardIssue.fields.issuetype.self',
-                   'issuelinks.outwardIssue.fields.issuetype.id'
+                   'issuelinks.outwardIssue.fields.issuetype.id',
+                   'comment.comments.author.key',
+                   'assignee.key',
+                   'reporter.key',
+                   'status.statusCategory.name',
+                   'issuelinks.outwardIssue.fields.status.statusCategory.name',
+                   'issuelinks.inwardIssue.fields.status.statusCategory.name',
+                   'subtasks.fields.status.statusCategory.name',
+                   'watches.watchCount'
 }
 
 #mismatches = set()
