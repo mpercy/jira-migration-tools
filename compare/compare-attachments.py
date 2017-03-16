@@ -25,6 +25,7 @@ def hash_filename(filename):
     for chunk in iter(lambda: f.read(4096), b""):
       h.update(chunk)
   return h.hexdigest()
+  os.remove(filename)
 
 def get_xml_attachments(key, server):
   """Returns a set of (filename, sha512hash) tuples derived from the XML dump of 'key'
@@ -41,7 +42,7 @@ def get_xml_attachments(key, server):
       pass
   if page.getcode() == 404:
     # http 404 issues are considered to have no attachments
-    return set()
+    return {}
   xmlissue = page.read()
   try:
     root = ET.fromstring(xmlissue)
@@ -52,36 +53,40 @@ def get_xml_attachments(key, server):
   [item] = [x for x in list(channel) if x.tag == "item"]
   [attachments] = [x for x in list(item) if x.tag == "attachments"]
   attachment_list = [x for x in list(attachments) if x.tag == "attachment"]
-  result = set()
+  result = {}
   for attachment in attachment_list:
     ident = attachment.attrib['id']
     name = attachment.attrib['name']
+    url = '{server}/secure/attachment/{ident}/{name}'
+    url = url.format(server=server, ident=ident, name=urllib.quote(name.encode('utf8')))
     while True:
       try:
-        (filename, _) = urllib.urlretrieve('{server}/secure/attachment/{ident}/{name}'
-                                           .format(server=server, ident=ident,
-                                                   name=urllib.quote(name.encode('utf8'))))
+        (filename, _) = urllib.urlretrieve(url)
         break
       except:
         pass
-    result.add((name, hash_filename(filename)))
-    os.remove(filename)
+    info = (name, hash_filename(filename))
+    if info in result: result[info] += [url]
+    else: result[info] = [url]
   return result
 
 def get_json_attachments(issue_dict):
   """Returns a set of (filename, sha512hash) like get_xml_attachments, above, but for a
   dictionary parsed from a JSON issue produced by running add_missing_jira_fields.py on an
   exported JSON issue."""
-  result = set()
+  result = {}
   if "attachments" in issue_dict:
     for attachment in issue_dict["attachments"]:
+      url = attachment["uri"]
       while True:
         try:
-          (filename, _) = urllib.urlretrieve(attachment["uri"])
+          (filename, _) = urllib.urlretrieve(url)
           break
         except:
           pass
-      result.add((attachment["name"], hash_filename(filename)))
+      info = (attachment["name"], hash_filename(filename))
+      if info in result: result[info] += [url]
+      else: result[info] = [url]
   return result
 
 KEY_REGEX = re.compile("^.+-([1-9][0-9]*)$")
@@ -91,9 +96,26 @@ def compare_json_issue_attachments((json_issue, minkey_num, maxkey_num, new_serv
   key_num = int(KEY_REGEX.match(key).group(1))
   if key_num < minkey_num or key_num >= maxkey_num: return
   from_json = get_json_attachments(json_issue)
-  from_xml = get_xml_attachments(key, new_server)
-  if from_json != from_xml:
-    print key #, from_json.symmetric_difference(from_xml)
+  while True:
+    try:
+      from_xml = get_xml_attachments(key, new_server)
+      break
+    except:
+      pass
+  result = ""
+  for info, urls in from_json.iteritems():
+    if info not in from_xml:
+      result += "\nAdd {} times: {}".format(len(urls), urls[0])
+    elif len(from_xml[info]) < len(urls):
+      result += "\nAdd {} times: {}".format(len(urls) - len(from_xml[info]), urls[0])
+    elif len(from_xml[info]) > len(urls):
+      for i in xrange(0, len(from_xml[info]) - len(urls)):
+        result += "\nRemove {}".format(from_xml[info][i])
+  for info, urls in from_xml.iteritems():
+    if info not in from_json:
+      for url in urls:
+        result += "\nRemove {}".format(url)
+  if result: print key, result
 
 def parallel_compare_export_attachments(json_export, minkey, maxkey, new_server):
   minkey_num = int(KEY_REGEX.match(minkey).group(1))
