@@ -8,6 +8,7 @@
 import argparse
 import hashlib
 import json
+from multiprocessing import Pool
 import urllib
 import os
 import re
@@ -35,8 +36,9 @@ def get_xml_attachments(key, server):
       page = urllib.urlopen(url)
       break
     except IOError:
-      sys.stdout.write('timeout ')
-      sys.stdout.flush()
+      #sys.stdout.write('timeout ')
+      #sys.stdout.flush()
+      pass
   if page.getcode() == 404:
     # http 404 issues are considered to have no attachments
     return set()
@@ -54,9 +56,14 @@ def get_xml_attachments(key, server):
   for attachment in attachment_list:
     ident = attachment.attrib['id']
     name = attachment.attrib['name']
-    (filename, _) = urllib.urlretrieve('{server}/secure/attachment/{ident}/{name}'
-                                       .format(server=server, ident=ident,
-                                               name=urllib.quote(name.encode('utf8'))))
+    while True:
+      try:
+        (filename, _) = urllib.urlretrieve('{server}/secure/attachment/{ident}/{name}'
+                                           .format(server=server, ident=ident,
+                                                   name=urllib.quote(name.encode('utf8'))))
+        break
+      except:
+        pass
     result.add((name, hash_filename(filename)))
     os.remove(filename)
   return result
@@ -68,11 +75,35 @@ def get_json_attachments(issue_dict):
   result = set()
   if "attachments" in issue_dict:
     for attachment in issue_dict["attachments"]:
-      (filename, _) = urllib.urlretrieve(attachment["uri"])
+      while True:
+        try:
+          (filename, _) = urllib.urlretrieve(attachment["uri"])
+          break
+        except:
+          pass
       result.add((attachment["name"], hash_filename(filename)))
   return result
 
 KEY_REGEX = re.compile("^.+-([1-9][0-9]*)$")
+
+def compare_json_issue_attachments((json_issue, minkey_num, maxkey_num, new_server)):
+  key = json_issue["key"]
+  key_num = int(KEY_REGEX.match(key).group(1))
+  if key_num < minkey_num or key_num >= maxkey_num: return
+  from_json = get_json_attachments(json_issue)
+  from_xml = get_xml_attachments(key, new_server)
+  if from_json != from_xml:
+    print key #, from_json.symmetric_difference(from_xml)
+
+def parallel_compare_export_attachments(json_export, minkey, maxkey, new_server):
+  minkey_num = int(KEY_REGEX.match(minkey).group(1))
+  maxkey_num = int(KEY_REGEX.match(maxkey).group(1))
+  json_issues = [json_issue for json_project in json_export["projects"]
+                 for json_issue in json_project["issues"]]
+  p = Pool(16)
+  p.map(compare_json_issue_attachments,
+        [(json_issue, minkey_num, maxkey_num, new_server) for json_issue in json_issues])
+
 
 def compare_export_attachments(json_export, minkey, maxkey, new_server):
   minkey_num = int(KEY_REGEX.match(minkey).group(1))
@@ -115,11 +146,11 @@ if __name__ == "__main__":
   old.add_argument("--old_server", default="https://issues.cloudera.org", help=" ")
   parser.add_argument("--minkey", default="IMPALA-1", help=" ")
   parser.add_argument("--maxkey", default="IMPALA-6000", help=" ")
-  parser.add_argument("--new_server", default="https://issues-test.apache.org/jira",
+  parser.add_argument("--new_server", default="https://issues.apache.org/jira",
                       help=" ")
   args = parser.parse_args()
   if args.json:
-    compare_export_attachments(
+    parallel_compare_export_attachments(
         json.load(open(args.json)),
         args.minkey, args.maxkey, args.new_server)
   else:
