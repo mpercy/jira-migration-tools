@@ -34,17 +34,17 @@ def issue_has_user_activity(user, issue):
         return True
     # Is the user a watcher of the issue?
 #    if "watchers" in issue.keys() and user in issue["watchers"]:
-#        return True
+ #       return True
     # Has the user ever commented on this issue?
     if "comments" in issue.keys():
         for comment in issue["comments"]:
             if comment["author"] == user:
                 return True
     # Did the user involve in any other activity on the issue?
-    if "history" in issue.keys():
-        for activity in issue["history"]:
-            if activity["author"] == user:
-                return True
+#    if "history" in issue.keys():
+#        for activity in issue["history"]:
+#            if activity["author"] == user:
+#                return True
     return False
 
 def print_users_with_no_activity(filename, users_with_no_activity):
@@ -57,7 +57,7 @@ def print_users_with_no_activity(filename, users_with_no_activity):
                      user_has_activity = True
                      break
              if not user_has_activity and user["name"] not in users_with_no_activity:
-                 print user["name"]
+#                 print user["name"]
                  users_with_no_activity.append(user["name"])
      return users_with_no_activity
 
@@ -69,22 +69,30 @@ if __name__ == "__main__":
 
     files = sys.argv[1:]
 
-    users_with_no_activity = []
-    for fname in files:
-        users_with_no_activity = print_users_with_no_activity(fname, users_with_no_activity)
-    sys.exit(1);
-
+    full_json_out = {}
     unique_users = []
+    users_json = []
+    issues_list = []
+    project_list = {};
 
     for fname in files:
         with open(fname, "r") as f:
             data = json.load(f)
+            project_list = data["projects"];
+            for issue in data["projects"][0]["issues"]:
+                issues_list.append(issue)
             for user in data["users"]:
-                if user["name"] in unique_users or user["name"] in users_with_no_activity : continue
+                if user["name"] in unique_users : continue
                 try:
-                    print format_user_profile_link(user, "https://issues.apache.org/jira")
                     unique_users.append(user["name"])
+                    users_json.append(user)
                 except UnicodeEncodeError:
                     pass
-    print
+#    print json.dumps(issues_list, sort_keys=True, indent=2, separators=(',', ': '))
+#    print json.dumps(users_json, sort_keys=False, indent=2, separators=(',', ': '))
+    project_list[0]["issues"] = issues_list
+    full_json_out["projects"] = project_list
+    full_json_out["users"] = users_json
+    #print json.dumps(project_list, sort_keys=False, indent=2, separators=(',', ': '))
+    print json.dumps(full_json_out, sort_keys=False, indent=2, separators=(',', ': '))
     sys.exit(0)

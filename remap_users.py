@@ -21,6 +21,9 @@ import requests
 import sys
 import time
 from list_users import format_user_profile_link
+import codecs
+
+requests.packages.urllib3.disable_warnings()
 
 # Fields with exact username matches.
 EXACT_USERNAME_FIELDS = frozenset(["reporter", "name", "assignee", "author", "oldValue",
@@ -54,12 +57,12 @@ def get_user_mappings(user_mappings_filename):
     user mapping file.
     """
     user_mappings = {}
-    with open(user_mappings_filename, "r") as umf:
+    with codecs.open(user_mappings_filename, "r", "utf-8") as umf:
         for line in umf:
             line = line.strip()
             if line.startswith("#") or line == "":
                 continue
-            fields = line.split(None, 1)
+            fields = line.split("=", 1)
             if len(fields) == 2:
                 old, new = fields
             else:
@@ -67,6 +70,13 @@ def get_user_mappings(user_mappings_filename):
                 old = new = fields[0]
             user_mappings[old] = new
     return user_mappings
+
+
+def make_case_sensitive_username_map(export):
+  result = {}
+  for user in export["users"]:
+    result[user["name"].lower()] = user["name"]
+  return result
 
 if __name__ == "__main__":
 
@@ -85,6 +95,11 @@ if __name__ == "__main__":
 
     with open(json_filename, "r") as f:
         data = json.load(f)
+        case_sensitive_username_map = make_case_sensitive_username_map(data)
+        for proj in data["projects"]:
+            for issue in proj["issues"]:
+                if "voters" in issue:
+                    issue["voters"] = [case_sensitive_username_map[user] for user in issue["voters"]]
 
         # Validate that we have accounted for all users in our mappings.
         found_all_users = True
@@ -95,6 +110,7 @@ if __name__ == "__main__":
                     sys.stderr.write("ERROR: The following users were not found in any mapping / exclusion files:\n")
                     sys.stderr.write("%s\n" % ('='*80,))
                 sys.stderr.write("%s\n" % (format_user_profile_link(user, dest_jira_url),))
+                print >>sys.stderr, type(user["name"]), user["name"]
         if not found_all_users:
             sys.exit(1)
 
@@ -116,17 +132,19 @@ if __name__ == "__main__":
                 replace_usernames(issue)
 
                 hidden = False
-                for h in issue["history"]:
-                    replace_usernames(h)
-                    if "items" in h:
-                        for item in h["items"]:
-                            replace_usernames(item)
-                            if "field" in item and "newValue" in item and "newDisplayValue" in item:
-                                # Check if the issue is "hidden". If so, we skip it.
-                                if item["field"] == "security" and item["newDisplayValue"] == "Hidden":
-                                    hidden = True
-                for c in issue["comments"]:
-                    replace_usernames(c)
+                if "history" in issue.keys():
+                    for h in issue["history"]:
+                        replace_usernames(h)
+                        if "items" in h:
+                            for item in h["items"]:
+                                replace_usernames(item)
+                                if "field" in item and "newValue" in item and "newDisplayValue" in item:
+                                    # Check if the issue is "hidden". If so, we skip it.
+                                    if item["field"] == "security" and item["newDisplayValue"] == "Hidden":
+                                        hidden = True
+                if "comments" in issue.keys():
+                    for c in issue["comments"]:
+                        replace_usernames(c)
 
                 if hidden:
                     # Simply skip this one.
@@ -134,5 +152,11 @@ if __name__ == "__main__":
                 # The "normal" case.
                 new_issues.append(issue)
             proj["issues"] = new_issues
+
+            new_components = []
+            for component in proj["components"]:
+                replace_usernames(component)
+                new_components.append(component);
+            proj["components"] = new_components
 
         print json.dumps(data, sort_keys=True, indent=2, separators=(',', ': '))
